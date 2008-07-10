@@ -100,7 +100,7 @@
             <img src="http://friendfeed.com/static/images/smile.png"/>
             {% for like in entry.likes %}
                 {% if loop.index < 4 %}<a href="chrome:/user/{{ like.user.nickname }}">{{ like.user.name }}</a>{% if loop.revindex > 2 and loop.index < 3 %},{% endif %}
-                {% if loop.revindex == 2 %}and{% endif %}{% endif %}
+                {% if loop.revindex == 2 and entry.likes|length < 4 %}and{% endif %}{% endif %}
             {% endfor %}
             {% if entry.likes|length > 3 %}and <a onclick="$('#likes_abbrev_{{ entry.id }}').hide();$('#likes_{{ entry.id }}').slideDown('normal')">{{ entry.likes|length - 3 }} more</a>{% endif %}
             liked this.
