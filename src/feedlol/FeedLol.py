@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from PyQt4.QtCore import SIGNAL, SLOT, QSettings, QVariant
+from PyQt4.QtCore import SIGNAL, SLOT, QSettings, QVariant, QUrl
 from PyQt4.QtGui import QMainWindow, QAction, QIcon, QProgressBar, QToolBar, \
     QKeySequence, QDialog
 from PyQt4.QtNetwork import QNetworkProxy
@@ -45,7 +45,8 @@ class FeedLol(QMainWindow):
         self.settingsAction = QAction(QIcon("data/icons/configure.svg"), "&Preferences...", self)
         self.connect(self.settingsAction, SIGNAL("triggered()"), self.slotSettings)
 
-        self.toolbar = QToolBar(self)
+        self.toolbar = QToolBar("Toolbar", self)
+        self.toolbar.setObjectName("toolbar")
         self.toolbar.addAction(self.homeAction)
         self.toolbar.addAction(self.userAction)
         self.toolbar.addAction(self.reloadAction)
@@ -70,11 +71,11 @@ class FeedLol(QMainWindow):
         self.connect(self.feedView, SIGNAL("loadStarted()"), self.loadStart)
         self.connect(self.feedView, SIGNAL("loadFinished(bool)"), self.loadStop)
         self.connect(self.feedView, SIGNAL("loadProgress(int)"), self.loadProgress)
-        self.connect(self.feedView.page(), SIGNAL("linkHovered(const QString&, const QString&, const QString&)"), self.linkHovered)
         self.connect(self.reloadAction, SIGNAL("triggered()"), self.feedView.reload)
         self.connect(self.homeAction, SIGNAL("triggered()"), self.feedView.goHome)
         self.connect(self.userAction, SIGNAL("triggered()"), self.feedView.goToUserPage)
         self.connect(self.logoutAction, SIGNAL("triggered()"), self.feedView.logout)
+        self.connect(self.feedView.page(), SIGNAL("linkHovered(const QString&, const QString&, const QString&)"), self.linkHovered)
         
         self.settingsDialog = SettingsDialog(self.feedView, self)
 
@@ -96,12 +97,15 @@ class FeedLol(QMainWindow):
             self.restoreGeometry(settings.value("mainWindow/geometry").toByteArray())
         else:
             self.resize(320,480)
-
+        if settings.contains("mainWindow/state"):
+            self.restoreState(settings.value("mainWindow/state").toByteArray())
+        
         self.feedView.goHome()
         
-    def saveState(self):
+    def saveConfig(self):
         settings = QSettings()
         settings.setValue("mainWindow/geometry", QVariant(self.saveGeometry()))
+        settings.setValue("mainWindow/state", QVariant(self.saveState()))
         session = self.feedView.siteServer.session
         from cPickle import dumps
         session = dumps(session)
@@ -136,7 +140,8 @@ class FeedLol(QMainWindow):
         self.loadStatus.setValue(progress)
     
     def linkHovered(self, url, title, text):
-        if url:
+        if url and QUrl(url).scheme() != "chrome":
             self.statusBar().showMessage(url)
         else:
             self.statusBar().clearMessage()
+
