@@ -29,5 +29,5 @@ if __name__ == "__main__":
     lol = FeedLol()
     lol.show()
     rv = app.exec_()
-    lol.saveState()
+    lol.saveConfig()
     sys.exit(rv)
