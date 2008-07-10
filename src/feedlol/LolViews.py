@@ -15,23 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from SiteServer import Response, RedirectResponse
+from SiteServer import Response, RedirectResponse, DeferredResponse
 from urllib2 import HTTPError, URLError
 
 def feed(request, user = None):
     if not request.session.is_auth():
         return RedirectResponse("chrome:/login")
-    ff = request.session.ff()
     if user == "me":
         user = request.session.user
-    try:
-        if user:
-            feed = ff.fetch_user_feed(user)
-        else:
-            feed = ff.fetch_home_feed()
-    except HTTPError, URLError:
-        request.session.logout()
-        return RedirectResponse("chrome:/login")
+    if user:
+        return DeferredResponse(request.ff.userFeed(user), feedReady, feedError)
+    else:
+        return DeferredResponse(request.ff.homeFeed(), feedReady, feedError)
+
+def feedReady(request, data, user = None):
+    feed = data
     print feed["entries"][0]
     entries = []
     last = None
@@ -44,6 +42,10 @@ def feed(request, user = None):
             last = i
     title = user and feed["entries"][0]["user"]["name"] or "Friends"
     return Response("feed.html", { "feed": entries, "title": title })
+
+def feedError(request, error, user = None):
+    request.session.logout()
+    return RedirectResponse("chrome:/login")
 
 def login(request):
     try:

@@ -20,6 +20,7 @@ from PyQt4.QtCore import SIGNAL, QUrl
 from PyQt4.QtGui import QDesktopServices, QPixmap
 from PyQt4.QtWebKit import QWebView, QWebPage, QWebSettings
 from SiteServer import SiteServer
+from feedlol.FriendFeedAPI import FriendFeedAPI
 from feedlol.PreviewTooltip import PreviewTooltip
 import os
 
@@ -31,7 +32,7 @@ class FeedView(QWebView):
         self.page().setForwardUnsupportedContent(True)
         self.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
         QWebSettings.setWebGraphic(QWebSettings.MissingImageGraphic, QPixmap("data/media/missing.png"))
-        self.siteServer = SiteServer()
+        self.siteServer = SiteServer(self)
         self.previewTooltip = None
         self.connect(self.page(), SIGNAL("linkClicked(const QUrl&)"), self.slotLinkClicked)
         self.connect(self.page(), SIGNAL("unsupportedContent(QNetworkReply*)"), self.slotHandleReply)
@@ -69,8 +70,7 @@ class FeedView(QWebView):
         frame.addToJavaScriptWindowObject("feedlol", JavascriptAPI(self.siteServer))
 
     def loadPage(self, url):
-        statusCode, content = self.siteServer.request(url)
-        self.setHtml(content, url)
+        self.siteServer.request(url, self)
 
     def linkHovered(self, url, title, text):
         if url and QUrl(url).scheme() != "chrome":
