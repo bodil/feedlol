@@ -1,0 +1,10 @@
+<RCC>
+  <qresource>
+    <file>icons/dialog-ok.svg</file>
+    <file>icons/dialog-close.svg</file>
+    <file>icons/dialog-cancel.svg</file>
+    <file>icons/dialog-ok-apply.svg</file>
+    <file>icons/preferences-system-network.svg</file>
+    <file>icons/user-identity.svg</file>
+  </qresource>
+</RCC>

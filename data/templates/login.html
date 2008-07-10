@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<h1 style="padding: 0.5em 1.5em; margin: 0; border-bottom: 1px solid #448; background-color: #113">FeedLol</h1>
+
+<div style="padding: 1em">
+
+<p><img src="{{ media }}/lol.png" style="float: left; margin: -0.3em 0.6em 0.3em 0"/>Please to entering the FriendFeed your identity self in below form honourable mister or madam.</p>
+
+<form method="get" action="login">
+<table style="clear: both; width: 100%">
+<tr><td style="text-align: right"><label for="username">FriendFeed nick:</label></td><td><input type="text" name="username" id="username" style="width:100%"/></td></tr>
+<tr><td style="text-align: right"><label for="remotekey">Remote key:</label></td><td><input type="password" name="remotekey" id="remotekey" style="width:100%"/></td></tr>
+<tr><td></td><td><a href="https://friendfeed.com/remotekey">What is my remote key?</a></td></tr>
+<tr><td colspan="2" style="text-align: right"><input type="submit" value="Login"/></td></tr>
+</table>
+</form>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function() {
+    $("#username").focus();
+});
+</script>
+
+{% endblock %}

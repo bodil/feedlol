@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block header %}
+<script type="text/javascript">//<![CDATA[
+    $(document).ready(function() {
+        var ignoreScrollEvent = false;
+        var keynavPosition = $("div.entry:first").addClass("activeNav").attr("id");
+        function activateEntry(name, scrollTo) {
+            if (name != keynavPosition) {
+                $("#"+keynavPosition).removeClass("activeNav");
+                var entry = $("#"+name);
+                entry.addClass("activeNav");
+                keynavPosition = name;
+                if (scrollTo) {
+                    ignoreScrollEvent = true;
+                    $.scrollTo(entry);
+                }
+            }
+        }
+        $("div.entry:visible").click(function(event) {
+            activateEntry($(this).attr("id"), true);
+        });
+        $(window).scroll(function(event) {
+            if (ignoreScrollEvent) { ignoreScrollEvent = false; return; }
+            var wTop = document.body.scrollTop;
+            var posts = $("div.entry:visible").map(function() { return { element: this, top:this.offsetTop + this.offsetHeight - 24, name:$(this).attr("id") }; }).get();
+            for (i = 0; i < posts.length; i++) {
+                var post = posts[i];
+                if (post.top >= wTop) {
+                    activateEntry(post.name);
+                    return;
+                }
+            }
+        });
+        $(window).keypress(function(event) {
+            var key = String.fromCharCode(event.which);
+            if (key == "+") {
+                $("#"+keynavPosition).parents("li").children(".postmore").click();
+            } else if (key == "j" || key == "k") {
+                var seq = $("div.entry:visible").map(function() { return $(this).attr("id"); }).get();
+                var pos = 0;
+                for (; pos < seq.length; pos++)
+                    if (seq[pos] == keynavPosition) break;
+                if (key == "j") {
+                    pos++; if (pos >= seq.length) pos = seq.length - 1;
+                } else if (key == "k") {
+                    pos--; if (pos < 0) pos = 0;
+                }
+                if (keynavPosition != seq[pos]) {
+                    activateEntry(seq[pos], true);
+                }
+            }
+        });
+    });
+//]]></script>
+{% endblock %}
+{% block content %}
+
+{% macro ffItem(entry) %}
+    {% if entry.media and entry.media[0].thumbnails %}
+        <p class="media">
+            {% for item in entry.media[0].thumbnails[:1] %}
+                <a href="{{ entry.link }}"><img src="{{ item.url }}" alt="{{ media.title }}"/></a>
+            {% endfor %}
+        </p>
+    {% endif %}
+    {% if entry.service.entryType == "message" or entry.service.id == "twitter" %}
+        {% if entry.service.id == "twitter" %}
+            <p class="post">{{ entry.title|twitterise|urlize(40) }}</p>
+        {% else %}
+            <p class="post">{{ entry.title|urlize(40) }}</p>
+        {% endif %}
+    {% else %}
+        <p class="post"><a href="{{ entry.link }}">{{ entry.title }}</a></p>
+    {% endif %}
+    <ul class="comments">
+        {% for comment in entry.comments[:3] %}
+            <li class="comment">
+                <p>{{ comment.body|urlize(40) }}</p>
+                <p><a href="chrome:/user/{{ comment.user.nickname }}">{{ comment.user.name }}</a> at {{ comment.date }}</p>
+            </li>
+        {% endfor %}
+        {% if entry.comments|length > 3 %}
+            <li class="comment postmore" onclick="$(this).hide();$('#comments_{{ entry.id }}').slideDown('normal')">Show {{ entry.comments|length - 3 }} more...</li>
+        {% endif %}
+    </ul>
+    {% if entry.comments|length > 3 %}
+        <ul class="comments" id="comments_{{ entry.id }}">
+            {% for comment in entry.comments[3:] %}
+                <li class="comment">
+                    <p>{{ comment.body|urlize(40) }}</p>
+                    <p><a href="chrome:/user/{{ comment.user.nickname }}">{{ comment.user.name }}</a> at {{ comment.date }}</p>
+                </li>
+            {% endfor %}
+        </ul>
+        <script type="text/javascript">$('#comments_{{ entry.id }}').hide();</script>
+    {% endif %}
+    {% if entry.likes %}
+        <p class="like" id="likes_abbrev_{{ entry.id }}">
+            <img src="http://friendfeed.com/static/images/smile.png"/>
+            {% for like in entry.likes %}
+                {% if loop.index < 4 %}<a href="chrome:/user/{{ like.user.nickname }}">{{ like.user.name }}</a>{% if loop.revindex > 2 and loop.index < 3 %},{% endif %}
+                {% if loop.revindex == 2 %}and{% endif %}{% endif %}
+            {% endfor %}
+            {% if entry.likes|length > 3 %}and <a onclick="$('#likes_abbrev_{{ entry.id }}').hide();$('#likes_{{ entry.id }}').slideDown('normal')">{{ entry.likes|length - 3 }} more</a>{% endif %}
+            liked this.
+        </p>
+        <p class="like" id="likes_{{ entry.id }}">
+            <img src="http://friendfeed.com/static/images/smile.png"/>
+            {% for like in entry.likes %}
+                <a href="chrome:/user/{{ like.user.nickname }}">{{ like.user.name }}</a>{% if loop.revindex > 2 %},{% endif %}
+                {% if loop.revindex == 2 %}and{% endif %}
+            {% endfor %}
+            liked this.
+        </p>
+        <script type="text/javascript">$('#likes_{{ entry.id }}').hide();</script>
+    {% endif %}
+    <ul class="actions">
+        <li onclick="eval('feedlol.'+this.innerHTML.toLowerCase()+'(\'{{ entry.id }}\')');this.innerHTML=(this.innerHTML=='Like')?'Unlike':'Like';">{% if entry|likes(session.user) %}Unlike{% else %}Like{% endif %}</li>
+        <li>Comment</li>
+    </ul>
+{% endmacro %}
+
+<ul class="entries">
+{% for group in feed %}
+<li class="entry">
+    {% if group[0].user.nickname %}<img src="http://friendfeed.s3.amazonaws.com/pictures-{{ group[0].user.id|replace("-","") }}-medium.jpg" class="portrait"/>{% endif %}
+    {% for entry in group[:3] %}
+        <div class="entry" id="entry_{{ entry.id }}">
+        {% if loop.first %}
+            <p class="postinfo">
+                <img src="{{ entry.service.iconUrl }}"/>
+                <a href="{% if entry.user.nickname %}chrome:/user/{{ entry.user.nickname }}{% else %}{{ entry.service.profileUrl }}{% endif %}">{{ entry.user.name }}</a>
+                on <a href="{{ entry.service.profileUrl }}">{{ entry.service.name }}</a>
+                {% if entry.via %}
+                    via <a href="{{ entry.via.url }}">{{ entry.via.name }}</a>
+                {% endif %}
+                at {{ entry.published }}
+            </p>
+        {% else %}
+            <p class="postinfo2">
+                And at {{ entry.published }}
+            </p>
+        {% endif %}
+        {{ ffItem(entry) }}
+        </div>
+    {% endfor %}
+    {% if group|length > 3 %}
+        <p class="postmore" onclick="$('#postmore_{{ group[0].id }}').children('div.invisibleEntry').removeClass('invisibleEntry').addClass('entry');$(this).hide();$('#postmore_{{ group[0].id }}').slideDown('normal')">Show {{ group|length - 3 }} more posts...</p>
+        <div id="postmore_{{ group[0].id }}">
+        {% for entry in group[3:] %}
+            <div class="invisibleEntry" id="entry_{{ entry.id }}">
+            <p class="postinfo2">And at {{ entry.published }}</p>
+            {{ ffItem(entry) }}
+            </div>
+        {% endfor %}
+        </div>
+        <script type="text/javascript">$('#postmore_{{ group[0].id }}').hide()</script>
+    {% endif %}
+</li>
+{% endfor %}
+</ul>
+
+{% endblock %}
