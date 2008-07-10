@@ -17,9 +17,10 @@
 
 from PyQt4.QtWebKit import QWebView, QWebPage, QWebSettings
 from PyQt4.QtCore import SIGNAL, QUrl
-from PyQt4.QtGui import QDesktopServices
+from PyQt4.QtGui import QDesktopServices, QPixmap
 from SiteServer import SiteServer
 from JavascriptAPI import JavascriptAPI
+import os
 
 class FeedView(QWebView):
     def __init__(self, parent = None):
@@ -28,6 +29,7 @@ class FeedView(QWebView):
         self.settings().setAttribute(QWebSettings.DeveloperExtrasEnabled, True)
         self.page().setForwardUnsupportedContent(True)
         self.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
+        QWebSettings.setWebGraphic(QWebSettings.MissingImageGraphic, QPixmap("data/media/missing.png"))
         self.siteServer = SiteServer()
         self.connect(self.page(), SIGNAL("linkClicked(const QUrl&)"), self.slotLinkClicked)
         self.connect(self.page(), SIGNAL("unsupportedContent(QNetworkReply*)"), self.slotHandleReply)
