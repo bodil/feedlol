@@ -15,11 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from PyQt4.QtWebKit import QWebView, QWebPage, QWebSettings
+from JavascriptAPI import JavascriptAPI
 from PyQt4.QtCore import SIGNAL, QUrl
 from PyQt4.QtGui import QDesktopServices, QPixmap
+from PyQt4.QtWebKit import QWebView, QWebPage, QWebSettings
 from SiteServer import SiteServer
-from JavascriptAPI import JavascriptAPI
+from feedlol.PreviewTooltip import PreviewTooltip
 import os
 
 class FeedView(QWebView):
@@ -31,11 +32,13 @@ class FeedView(QWebView):
         self.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
         QWebSettings.setWebGraphic(QWebSettings.MissingImageGraphic, QPixmap("data/media/missing.png"))
         self.siteServer = SiteServer()
+        self.previewTooltip = None
         self.connect(self.page(), SIGNAL("linkClicked(const QUrl&)"), self.slotLinkClicked)
         self.connect(self.page(), SIGNAL("unsupportedContent(QNetworkReply*)"), self.slotHandleReply)
         self.connect(self.page(), SIGNAL("frameCreated(QWebFrame*)"), self.setupFrame)
         # NOTE: This simplified mechanism depends on the application NEVER using framesets!
         self.connect(self.page().mainFrame(), SIGNAL("javaScriptWindowObjectCleared()"), self.setupFrame)
+        self.connect(self.page(), SIGNAL("linkHovered(const QString&, const QString&, const QString&)"), self.linkHovered)
         
     def goHome(self):
         self.load(QUrl("chrome:/"))
@@ -68,4 +71,21 @@ class FeedView(QWebView):
     def loadPage(self, url):
         statusCode, content = self.siteServer.request(url)
         self.setHtml(content, url)
+
+    def linkHovered(self, url, title, text):
+        if url and QUrl(url).scheme() != "chrome":
+            if self.previewTooltip and self.previewTooltip.url == url:
+                return
+            self.previewTooltip = PreviewTooltip(url)
+            self.previewTooltip.show()
+        else:
+            if self.previewTooltip:
+                self.previewTooltip.deleteLater()
+            self.previewTooltip = None
+
+    def leaveEvent(self, event):
+        self.linkHovered(None, None, None)
+
+    def focusOutEvent(self, event):
+        self.linkHovered(None, None, None)
 
