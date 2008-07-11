@@ -77,7 +77,7 @@
         {% for comment in entry.comments[:3] %}
             <li class="comment">
                 <p>{{ comment.body|urlize(40) }}</p>
-                <p><a href="chrome:/user/{{ comment.user.nickname }}">{{ comment.user.name }}</a> at {{ comment.date }}</p>
+                <p><a href="chrome:/user/{{ comment.user.nickname }}">{{ comment.user.name }}</a> {{ comment.date|timesince }} ago</p>
             </li>
         {% endfor %}
         {% if entry.comments|length > 3 %}
@@ -89,7 +89,7 @@
             {% for comment in entry.comments[3:] %}
                 <li class="comment">
                     <p>{{ comment.body|urlize(40) }}</p>
-                    <p><a href="chrome:/user/{{ comment.user.nickname }}">{{ comment.user.name }}</a> at {{ comment.date }}</p>
+                    <p><a href="chrome:/user/{{ comment.user.nickname }}">{{ comment.user.name }}</a> {{ comment.date|timesince }} ago</p>
                 </li>
             {% endfor %}
         </ul>
@@ -124,22 +124,27 @@
 <ul class="entries">
 {% for group in feed %}
 <li class="entry">
-    {% if group[0].user.nickname %}<img src="http://friendfeed.s3.amazonaws.com/pictures-{{ group[0].user.id|replace("-","") }}-medium.jpg" class="portrait"/>{% endif %}
+    {% if group[0].user.nickname %}
+        <img src="http://friendfeed.s3.amazonaws.com/pictures-{{ group[0].user.id|replace("-","") }}-medium.jpg" class="portrait"/>
+    {% else %}
+        <img src="{{ media }}/missing.png" class="portrait"/>
+    {% endif %}
     {% for entry in group[:3] %}
         <div class="entry" id="entry_{{ entry.id }}">
         {% if loop.first %}
             <p class="postinfo">
                 <img src="{{ entry.service.iconUrl }}"/>
                 <a href="{% if entry.user.nickname %}chrome:/user/{{ entry.user.nickname }}{% else %}{{ entry.service.profileUrl }}{% endif %}">{{ entry.user.name }}</a>
+                {% if not entry.user.nickname %}(imaginary){% endif %}
                 on <a href="{{ entry.service.profileUrl }}">{{ entry.service.name }}</a>
                 {% if entry.via %}
                     via <a href="{{ entry.via.url }}">{{ entry.via.name }}</a>
                 {% endif %}
-                at {{ entry.published }}
+                {{ entry.published|timesince }} ago
             </p>
         {% else %}
             <p class="postinfo2">
-                And at {{ entry.published }}
+                And {{ entry.published|timesince }} ago
             </p>
         {% endif %}
         {{ ffItem(entry) }}
@@ -150,7 +155,7 @@
         <div id="postmore_{{ group[0].id }}">
         {% for entry in group[3:] %}
             <div class="invisibleEntry" id="entry_{{ entry.id }}">
-            <p class="postinfo2">And at {{ entry.published }}</p>
+            <p class="postinfo2">And {{ entry.published|timesince }} ago</p>
             {{ ffItem(entry) }}
             </div>
         {% endfor %}
