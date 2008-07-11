@@ -28,13 +28,11 @@ class JavascriptAPI(QObject):
 
     @pyqtSignature("const QString&")
     def like(self, id):
-        ff = self.site.session.ff()
-        ff.add_like(id)
+        self.site.ff.like(id)
 
     @pyqtSignature("const QString&")
     def unlike(self, id):
-        ff = self.site.session.ff()
-        ff.delete_like(id)
+        self.site.ff.unlike(id)
 
     @pyqtSignature("const QString&")
     def notify(self, url):

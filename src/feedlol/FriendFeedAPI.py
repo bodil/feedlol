@@ -32,6 +32,12 @@ class FriendFeedAPI(QObject):
     
     def userFeed(self, nickname):
         return self._request("/api/feed/user/" + urllib.quote_plus(nickname), feed = True)
+    
+    def like(self, id):
+        return self._request("/api/like", post_args = { "entry": id })
+
+    def unlike(self, id):
+        return self._request("/api/like/delete", post_args = { "entry": id })
 
     def _request(self, path, feed = False, post_args = None, **url_args):
         url = self.url.resolved(QUrl(path))
