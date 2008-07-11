@@ -34,7 +34,7 @@ def feedReady(request, data, user = None):
     entries = []
     last = None
     for i in feed["entries"]:
-        if last and last["user"]["nickname"] == i["user"]["nickname"] and last["service"]["id"] == i["service"]["id"]:
+        if last and last["user"]["id"] == i["user"]["id"] and last["service"]["id"] == i["service"]["id"]:
             entry.append(i)
         else:
             entry = [i]
