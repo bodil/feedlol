@@ -34,11 +34,45 @@ class FriendFeedAPI(QObject):
     def userFeed(self, nickname):
         return self._request("/api/feed/user/" + urllib.quote_plus(nickname), feed = True)
     
+    def post(self, message, link = None, comment = None, room = None):
+        post_args = { "title": message }
+        if link:
+            post_args["link"] = link
+        if comment:
+            post_args["comment"] = comment
+        if room:
+            post_args["room"] = room
+        return self._request("/api/share", feed = True, post_args = post_args)
+    
+    def deleteEntry(self, entry_id):
+        return self._request("/api/entry/delete", post_args = { "entry": entry_id })
+    
+    def undeleteEntry(self, entry_id):
+        return self._request("/api/entry/delete", post_args = { "entry": entry_id, "undelete": 1 })
+    
+    def hideEntry(self, entry_id):
+        return self._request("/api/entry/hide", post_args = { "entry": entry_id })
+    
+    def unhideEntry(self, entry_id):
+        return self._request("/api/entry/hide", post_args = { "entry": entry_id, "unhide": 1 })
+    
     def like(self, id):
         return self._request("/api/like", post_args = { "entry": id })
 
     def unlike(self, id):
         return self._request("/api/like/delete", post_args = { "entry": id })
+    
+    def comment(self, entry_id, body):
+        return self._request("/api/comment", post_args = { "entry": entry_id, "body": body })
+
+    def editComment(self, entry_id, id, body):
+        return self._request("/api/comment", post_args = { "entry": entry_id, "comment": id, "body": body })
+    
+    def deleteComment(self, entry_id, id):
+        return self._request("/api/comment/delete", post_args = { "entry": entry_id, "comment": id })
+
+    def undeleteComment(self, entry_id, id):
+        return self._request("/api/comment/delete", post_args = { "entry": entry_id, "comment": id, "undelete": 1 })
 
     def _request(self, path, feed = False, post_args = None, **url_args):
         url = self.url.resolved(QUrl(path))
