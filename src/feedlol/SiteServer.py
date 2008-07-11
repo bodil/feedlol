@@ -189,7 +189,7 @@ class SiteServer(QObject):
         else:
             template = self.jinja.get_template(response.template, globals = {
                 "session": self.session,
-                "media": "file://" + os.path.join(os.getcwd(), "data/media"),
+                "media": str(QUrl.fromLocalFile(os.path.join(os.getcwd(), "data", "media")).toEncoded()),
             })
             view.setHtml(template.render(response.context), url)
 
