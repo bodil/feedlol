@@ -17,6 +17,7 @@
 
 from PyQt4.QtNetwork import QNetworkRequest, QNetworkReply, QNetworkAccessManager
 from PyQt4.QtCore import SIGNAL, QObject, QUrl, QByteArray
+import base64, urllib, simplejson, datetime, time
 import base64, urllib, simplejson
 
 class FriendFeedAPI(QObject):
@@ -78,6 +79,20 @@ class FriendFeedRequest(QObject):
             self.emit(SIGNAL("error"), self.reply.error())
         else:
             self.data.append(self.reply.readAll())
-            self.emit(SIGNAL("ready"), simplejson.loads(str(self.data).decode("utf-8")))
+            result = simplejson.loads(str(self.data).decode("utf-8"))
+            if self.feed:
+                date_properties = frozenset(("updated", "published"))
+                for entry in result.get("entries", []):
+                    entry["updated"] = self._parse_date(entry["updated"])
+                    entry["published"] = self._parse_date(entry["published"])
+                    for comment in entry.get("comments", []):
+                        comment["date"] = self._parse_date(comment["date"])
+                    for like in entry.get("likes", []):
+                        like["date"] = self._parse_date(like["date"])
+                result["entries"].sort(key = lambda x:x["updated"], reverse = True)
+            self.emit(SIGNAL("ready"), result)
         self.emit(SIGNAL("cleanup"), self)
 
+    def _parse_date(self, date_str):
+        rfc3339_date = "%Y-%m-%dT%H:%M:%SZ"
+        return datetime.datetime(*time.strptime(date_str, rfc3339_date)[:6])
