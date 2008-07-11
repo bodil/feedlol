@@ -17,7 +17,7 @@
 
 from PyQt4.QtNetwork import QNetworkRequest, QNetworkReply, QNetworkAccessManager
 from PyQt4.QtCore import SIGNAL, QObject, QUrl, QByteArray
-import base64, urllib, cjson
+import base64, urllib, simplejson
 
 class FriendFeedAPI(QObject):
     def __init__(self, session = None, url = "http://friendfeed.com/", manager = QNetworkAccessManager(), parent = None):
@@ -72,6 +72,6 @@ class FriendFeedRequest(QObject):
             self.emit(SIGNAL("error"), self.reply.error())
         else:
             self.data.append(self.reply.readAll())
-            self.emit(SIGNAL("ready"), cjson.decode(str(self.data).decode("utf-8")))
+            self.emit(SIGNAL("ready"), simplejson.loads(str(self.data).decode("utf-8")))
         self.emit(SIGNAL("cleanup"), self)
 
